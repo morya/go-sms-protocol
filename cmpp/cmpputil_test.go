@@ -112,7 +112,7 @@ func TestGenConnectRespAuthISMG(t *testing.T) {
 			},
 		},
 	} {
-		auth := GenConnectRespAuthISMG(item.status, string(item.authBytes), item.password)
+		auth := GenConnectRespAuthISMG(item.status, item.authBytes, item.password)
 		assert.Equal(t, item.expectAuthString, auth)
 	}
 }

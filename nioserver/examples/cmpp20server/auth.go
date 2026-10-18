@@ -67,7 +67,7 @@ func newConnectResponse(
 	if status == cmpp20.ConnectRespStatusSuccess {
 		ismg := cmpp.GenConnectRespAuthISMG(
 			[]byte{byte(status)},
-			string(request.AuthenticatorSource[:]),
+			request.AuthenticatorSource[:],
 			password,
 		)
 		copy(response.AuthenticatorISMG[:], ismg)

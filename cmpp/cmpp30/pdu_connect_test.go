@@ -139,7 +139,7 @@ func (s *ConnectRespTestSuite) TestConnectResp_IDecode() {
 	statusBuf := new(bytes.Buffer)
 	s.Nil(binary.Write(statusBuf, binary.BigEndian, c.Status))
 
-	copy(c.AuthenticatorISMG[:], cmpp.GenConnectRespAuthISMG(statusBuf.Bytes(), string(s.auth), s.secret))
+	copy(c.AuthenticatorISMG[:], cmpp.GenConnectRespAuthISMG(statusBuf.Bytes(), s.auth, s.secret))
 
 	data, err := c.IEncode()
 	s.Nil(err)
@@ -158,7 +158,7 @@ func (s *ConnectRespTestSuite) TestConnectResp_IEncode() {
 	statusBuf := new(bytes.Buffer)
 	s.Nil(binary.Write(statusBuf, binary.BigEndian, c.Status))
 
-	m := cmpp.GenConnectRespAuthISMG(statusBuf.Bytes(), string(s.auth), s.secret)
+	m := cmpp.GenConnectRespAuthISMG(statusBuf.Bytes(), s.auth, s.secret)
 	s.Equal(m, c.AuthenticatorISMG[:])
 }
 

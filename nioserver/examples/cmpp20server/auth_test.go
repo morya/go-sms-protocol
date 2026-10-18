@@ -111,7 +111,7 @@ func TestNewConnectResponse(t *testing.T) {
 	success := newConnectResponse(request, cmpp20.ConnectRespStatusSuccess, "test-secret")
 	wantAuthenticator := cmpp.GenConnectRespAuthISMG(
 		[]byte{byte(cmpp20.ConnectRespStatusSuccess)},
-		string(requestAuthenticator[:]),
+		requestAuthenticator[:],
 		"test-secret",
 	)
 	if !bytes.Equal(success.AuthenticatorISMG[:], wantAuthenticator) {
