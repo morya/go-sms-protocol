@@ -25,7 +25,7 @@ func NewConnect(account, passwd string, seqID uint32) *PduConnect {
 	connectPdu := &PduConnect{
 		Header:              cmpp.NewHeader(0, cmpp.CommandConnect, seqID),
 		SourceAddr:          account,
-		AuthenticatorSource: string(md5Bytes[:]),
+		AuthenticatorSource: md5Bytes,
 		Version:             cmpp.Version20,
 		Timestamp:           ts,
 	}

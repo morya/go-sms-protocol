@@ -44,16 +44,16 @@ func TestPduConnectResp(t *testing.T) {
 	assert.Equal(t, uint32(38), c.SequenceID)
 	assert.Equal(t, ConnectRespStatus(0), c.Status)
 	assert.Equal(t, ConnectRespStatusSuccess.String(), c.Status.String())
-	assert.Equal(t, string(make([]byte, 16)), c.AuthenticatorISMG)
+	assert.Equal(t, [16]byte{}, c.AuthenticatorISMG)
 	assert.Equal(t, uint8(0), c.Version)
 	t.Log(c.String())
 }
 
 func TestPduConnectBinaryAuthenticatorsRoundTrip(t *testing.T) {
-	authenticatorSource := string([]byte{
+	authenticatorSource := [16]byte{
 		0x01, 0x00, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 		0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
-	})
+	}
 	request := &PduConnect{
 		Header:              cmpp.NewHeader(0, cmpp.CommandConnect, 1),
 		SourceAddr:          "900001",
@@ -74,10 +74,10 @@ func TestPduConnectBinaryAuthenticatorsRoundTrip(t *testing.T) {
 		t.Fatalf("AuthenticatorSource = %x, want %x", decodedRequest.AuthenticatorSource, authenticatorSource)
 	}
 
-	authenticatorISMG := string([]byte{
+	authenticatorISMG := [16]byte{
 		0x10, 0x0f, 0x0e, 0x0d, 0x0c, 0x00, 0x0a, 0x09,
 		0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
-	})
+	}
 	response := &PduConnectResp{
 		Header:            cmpp.NewHeader(0, cmpp.CommandConnectResp, 1),
 		Status:            ConnectRespStatusSuccess,

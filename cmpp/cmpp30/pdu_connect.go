@@ -14,7 +14,7 @@ type Connect struct {
 	SourceAddr string
 
 	// AuthenticatorSource is the authentication string (16 bytes), calculated as md5(SourceAddr + 9 bytes of zeros + password + Timestamp).
-	AuthenticatorSource string
+	AuthenticatorSource [16]byte
 
 	// Version is the protocol version (1 byte). Higher 4 bits for major version, lower 4 bits for minor version. For versions below 3.0, it's fixed to 0x30.
 	Version uint8
@@ -34,7 +34,7 @@ func (p *Connect) IDecode(data []byte) error {
 
 	p.Header = cmpp.ReadHeader(buf)
 	p.SourceAddr = buf.ReadCStringN(6)
-	p.AuthenticatorSource = buf.ReadCStringN(16)
+	buf.ReadBytes(p.AuthenticatorSource[:])
 	p.Version = buf.ReadUint8()
 	p.Timestamp = buf.ReadUint32()
 
@@ -48,7 +48,7 @@ func (p *Connect) IEncode() ([]byte, error) {
 
 	cmpp.WriteHeaderNoLength(p.Header, buf)
 	buf.WriteFixedLenStringField("SourceAddr", p.SourceAddr, 6)
-	buf.WriteFixedLenStringField("AuthenticatorSource", p.AuthenticatorSource, 16)
+	buf.WriteBytes(p.AuthenticatorSource[:])
 	buf.WriteUint8(p.Version)
 	buf.WriteUint32(p.Timestamp)
 
@@ -87,7 +87,7 @@ func (c *Connect) String() string {
 
 	w.Write("Header", c.Header)
 	w.Write("SourceAddr", c.SourceAddr)
-	w.WriteWithBytes("AuthenticatorSource", c.AuthenticatorSource)
+	w.WriteWithBytes("AuthenticatorSource", c.AuthenticatorSource[:])
 	w.Write("Version", c.Version)
 
 	return w.String()
@@ -108,7 +108,7 @@ type ConnectResp struct {
 	Status uint32
 
 	// AuthenticatorISMG is the ISMG authentication code (16 bytes), used to authenticate the ISMG. Calculated as md5(Status + req.AuthenticatorSource + password).
-	AuthenticatorISMG string
+	AuthenticatorISMG [16]byte
 
 	// Version is the highest protocol version supported by the server (1 byte).
 	Version uint8
@@ -124,7 +124,7 @@ func (c *ConnectResp) IDecode(data []byte) error {
 
 	c.Header = cmpp.ReadHeader(buf)
 	c.Status = buf.ReadUint32()
-	c.AuthenticatorISMG = buf.ReadCStringN(16)
+	buf.ReadBytes(c.AuthenticatorISMG[:])
 	c.Version = buf.ReadUint8()
 	return buf.Error()
 }
@@ -136,7 +136,7 @@ func (c *ConnectResp) IEncode() ([]byte, error) {
 
 	cmpp.WriteHeaderNoLength(c.Header, buf)
 	buf.WriteUint32(c.Status)
-	buf.WriteFixedLenStringField("AuthenticatorISMG", c.AuthenticatorISMG, 16)
+	buf.WriteBytes(c.AuthenticatorISMG[:])
 	buf.WriteUint8(c.Version)
 
 	return buf.BytesWithLength()
@@ -169,7 +169,7 @@ func (c *ConnectResp) String() string {
 
 	w.Write("Header", c.Header)
 	w.Write("Status", c.Status)
-	w.WriteWithBytes("AuthenticatorISMG", c.AuthenticatorISMG)
+	w.WriteWithBytes("AuthenticatorISMG", c.AuthenticatorISMG[:])
 	w.Write("Version", c.Version)
 
 	return w.String()

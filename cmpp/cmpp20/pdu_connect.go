@@ -15,7 +15,7 @@ type PduConnect struct {
 	SourceAddr string
 
 	// AuthenticatorSource is the authenticator source (16 bytes, MD5(SourceAddr + 9 bytes of 0 + password + Timestamp)).
-	AuthenticatorSource string
+	AuthenticatorSource [16]byte
 
 	// Version is the version number (1 byte). High 4 bits for major, low 4 bits for minor. Fixed to 0x20 for CMPP 2.0.
 	Version uint8
@@ -31,7 +31,7 @@ func (p *PduConnect) IEncode() ([]byte, error) {
 
 	cmpp.WriteHeaderNoLength(p.Header, buf)
 	buf.WriteFixedLenStringField("SourceAddr", p.SourceAddr, 6)
-	buf.WriteFixedLenStringField("AuthenticatorSource", p.AuthenticatorSource, 16)
+	buf.WriteBytes(p.AuthenticatorSource[:])
 	buf.WriteUint8(p.Version)
 	buf.WriteUint32(p.Timestamp)
 
@@ -49,7 +49,7 @@ func (p *PduConnect) IDecode(data []byte) error {
 
 	p.Header = cmpp.ReadHeader(buf)
 	p.SourceAddr = buf.ReadCStringN(6)
-	p.AuthenticatorSource = buf.ReadCStringNWithoutTrim(16)
+	buf.ReadBytes(p.AuthenticatorSource[:])
 	p.Version = buf.ReadUint8()
 	p.Timestamp = buf.ReadUint32()
 
@@ -88,7 +88,7 @@ func (p *PduConnect) String() string {
 
 	w.Write("Header", p.Header)
 	w.Write("SourceAddr", p.SourceAddr)
-	w.WriteWithBytes("AuthenticatorSource", p.AuthenticatorSource)
+	w.WriteWithBytes("AuthenticatorSource", p.AuthenticatorSource[:])
 	w.Write("Version", p.Version)
 	w.Write("Timestamp", p.Timestamp)
 
@@ -106,7 +106,7 @@ type PduConnectResp struct {
 	Status ConnectRespStatus
 
 	// AuthenticatorISMG is the ISMG authenticator code (16 bytes, MD5(Status + req.AuthenticatorSource + password)).
-	AuthenticatorISMG string
+	AuthenticatorISMG [16]byte
 
 	// Version is the highest version number supported by the server (1 byte).
 	Version uint8
@@ -119,7 +119,7 @@ func (pr *PduConnectResp) IEncode() ([]byte, error) {
 
 	cmpp.WriteHeaderNoLength(pr.Header, buf)
 	buf.WriteUint8(uint8(pr.Status))
-	buf.WriteFixedLenStringField("AuthenticatorISMG", pr.AuthenticatorISMG, 16)
+	buf.WriteBytes(pr.AuthenticatorISMG[:])
 	buf.WriteUint8(pr.Version)
 
 	return buf.BytesWithLength()
@@ -134,7 +134,7 @@ func (pr *PduConnectResp) IDecode(data []byte) error {
 	buf := packet.NewPacketReader(data)
 	pr.Header = cmpp.ReadHeader(buf)
 	pr.Status = ConnectRespStatus(buf.ReadUint8())
-	pr.AuthenticatorISMG = buf.ReadCStringNWithoutTrim(16)
+	buf.ReadBytes(pr.AuthenticatorISMG[:])
 	pr.Version = buf.ReadUint8()
 
 	return buf.Error()
@@ -167,7 +167,7 @@ func (p *PduConnectResp) String() string {
 
 	w.Write("Header", p.Header)
 	w.Write("Status", p.Status)
-	w.WriteWithBytes("AuthenticatorISMG", p.AuthenticatorISMG)
+	w.WriteWithBytes("AuthenticatorISMG", p.AuthenticatorISMG[:])
 	w.Write("Version", p.Version)
 
 	return w.String()

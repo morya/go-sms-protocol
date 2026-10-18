@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"sync"
@@ -31,7 +32,8 @@ func (p *PDUStringer) composeKV(field string, v any, appendBytes bool) string {
 	switch vv := v.(type) {
 	case string:
 		if appendBytes {
-			return fmt.Sprintf(`key=%s, valueString="%s", valueBytes=%v`, field, vv, []byte(vv))
+			s := hex.EncodeToString([]byte(vv))
+			return fmt.Sprintf(`key=%s, valueBytes=%v`, field, s)
 		} else {
 			return fmt.Sprintf(`key=%s, valueString="%s"`, field, vv)
 		}
@@ -42,7 +44,8 @@ func (p *PDUStringer) composeKV(field string, v any, appendBytes bool) string {
 	case bool:
 		return fmt.Sprintf(`key=%s, valueBoolean=%t`, field, vv)
 	case []byte:
-		return fmt.Sprintf(`key=%s, valueString="%s", valueBytes=%v`, field, string(vv), vv)
+		ss := hex.EncodeToString(vv)
+		return fmt.Sprintf(`key=%s, valueBytes=%v`, field, ss)
 	case fmt.Stringer:
 		s := vv.String()
 		if appendBytes {

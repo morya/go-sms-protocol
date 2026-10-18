@@ -82,5 +82,8 @@ func validateCMPPCommandLength(totalLen uint32) error {
 	if totalLen < cmpp.MinCMPPPduLength {
 		return cmpp.ErrInvalidPudLength
 	}
+	if int(totalLen) > MaxPacketSize {
+		return fmt.Errorf("total length %d exceeds max packet size %d", totalLen, MaxPacketSize)
+	}
 	return nil
 }

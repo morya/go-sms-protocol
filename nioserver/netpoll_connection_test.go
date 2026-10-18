@@ -1,3 +1,5 @@
+//go:build netpoll
+
 package nioserver
 
 import (

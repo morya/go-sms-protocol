@@ -1,3 +1,5 @@
+//go:build netpoll
+
 package main
 
 import (
@@ -29,9 +31,6 @@ func authenticateConnect(
 	if request.Version != cmpp.Version20 {
 		return cmpp20.ConnectRespStatusVersionTooHigh
 	}
-	if len(request.AuthenticatorSource) != md5.Size {
-		return cmpp20.ConnectRespStatusAuthError
-	}
 	// 时间窗口用于拒绝明显过期的鉴权报文。生产网关还应增加持久化的重放缓存，
 	// 因为仅校验时间窗口不能阻止攻击者在窗口内重复发送同一报文。
 	if !isFreshConnectTimestamp(request.Timestamp, now, allowedSkew) {
@@ -40,7 +39,7 @@ func authenticateConnect(
 
 	want := makeAuthenticatorSource(account, password, request.Timestamp)
 	// 鉴权摘要属于秘密相关数据，使用常量时间比较，避免普通字节比较暴露前缀匹配时序。
-	if subtle.ConstantTimeCompare([]byte(request.AuthenticatorSource), want[:]) != 1 {
+	if subtle.ConstantTimeCompare(request.AuthenticatorSource[:], want[:]) != 1 {
 		return cmpp20.ConnectRespStatusAuthError
 	}
 	return cmpp20.ConnectRespStatusSuccess
@@ -66,11 +65,12 @@ func newConnectResponse(
 	// 协议只要求成功响应携带 AuthenticatorISMG。失败时保持空值，编码器会补齐为 16 个零字节，
 	// 避免错误响应泄露任何由密码派生的信息。
 	if status == cmpp20.ConnectRespStatusSuccess {
-		response.AuthenticatorISMG = string(cmpp.GenConnectRespAuthISMG(
+		ismg := cmpp.GenConnectRespAuthISMG(
 			[]byte{byte(status)},
-			request.AuthenticatorSource,
+			string(request.AuthenticatorSource[:]),
 			password,
-		))
+		)
+		copy(response.AuthenticatorISMG[:], ismg)
 	}
 	return response
 }

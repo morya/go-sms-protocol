@@ -52,7 +52,7 @@ func (s *ConnectTestSuite) TestConnect_IDecode() {
 		Version:   s.version,
 		Timestamp: t,
 	}
-	c.AuthenticatorSource = string(cmpp.GenConnectAuth(c.SourceAddr, s.password, a))
+	copy(c.AuthenticatorSource[:], cmpp.GenConnectAuth(c.SourceAddr, s.password, a))
 	data, err := c.IEncode()
 
 	s.Nil(err)
@@ -67,7 +67,7 @@ func (s *ConnectTestSuite) TestConnect_IEncode() {
 	a, t := cmpp.GenConnectTimestamp(s.nowFunc)
 	s.Equal(t, c.Timestamp)
 
-	s.Equal(string(cmpp.GenConnectAuth(c.SourceAddr, s.password, a)), c.AuthenticatorSource)
+	s.Equal(cmpp.GenConnectAuth(c.SourceAddr, s.password, a), c.AuthenticatorSource[:])
 }
 
 func (s *ConnectTestSuite) TestConnect_GenEmptyResponse() {
@@ -139,7 +139,7 @@ func (s *ConnectRespTestSuite) TestConnectResp_IDecode() {
 	statusBuf := new(bytes.Buffer)
 	s.Nil(binary.Write(statusBuf, binary.BigEndian, c.Status))
 
-	c.AuthenticatorISMG = string(cmpp.GenConnectRespAuthISMG(statusBuf.Bytes(), string(s.auth), s.secret))
+	copy(c.AuthenticatorISMG[:], cmpp.GenConnectRespAuthISMG(statusBuf.Bytes(), string(s.auth), s.secret))
 
 	data, err := c.IEncode()
 	s.Nil(err)
@@ -159,7 +159,7 @@ func (s *ConnectRespTestSuite) TestConnectResp_IEncode() {
 	s.Nil(binary.Write(statusBuf, binary.BigEndian, c.Status))
 
 	m := cmpp.GenConnectRespAuthISMG(statusBuf.Bytes(), string(s.auth), s.secret)
-	s.Equal(string(m), c.AuthenticatorISMG)
+	s.Equal(m, c.AuthenticatorISMG[:])
 }
 
 func (s *ConnectRespTestSuite) TestConnectResp_GetSequenceID() {

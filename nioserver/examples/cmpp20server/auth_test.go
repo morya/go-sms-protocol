@@ -1,3 +1,5 @@
+//go:build netpoll
+
 package main
 
 import (
@@ -27,7 +29,7 @@ func TestAuthenticateConnect(t *testing.T) {
 			name: "valid credentials",
 			request: cmpp20.PduConnect{
 				SourceAddr:          account,
-				AuthenticatorSource: string(validAuthenticator[:]),
+				AuthenticatorSource: validAuthenticator,
 				Version:             cmpp.Version20,
 				Timestamp:           validTimestamp,
 			},
@@ -37,7 +39,7 @@ func TestAuthenticateConnect(t *testing.T) {
 			name: "unknown account",
 			request: cmpp20.PduConnect{
 				SourceAddr:          "900002",
-				AuthenticatorSource: string(validAuthenticator[:]),
+				AuthenticatorSource: validAuthenticator,
 				Version:             cmpp.Version20,
 				Timestamp:           validTimestamp,
 			},
@@ -47,7 +49,7 @@ func TestAuthenticateConnect(t *testing.T) {
 			name: "wrong authenticator",
 			request: cmpp20.PduConnect{
 				SourceAddr:          account,
-				AuthenticatorSource: string(make([]byte, 16)),
+				AuthenticatorSource: [16]byte{},
 				Version:             cmpp.Version20,
 				Timestamp:           validTimestamp,
 			},
@@ -57,7 +59,7 @@ func TestAuthenticateConnect(t *testing.T) {
 			name: "unsupported version",
 			request: cmpp20.PduConnect{
 				SourceAddr:          account,
-				AuthenticatorSource: string(validAuthenticator[:]),
+				AuthenticatorSource: validAuthenticator,
 				Version:             cmpp.Version30,
 				Timestamp:           validTimestamp,
 			},
@@ -70,7 +72,7 @@ func TestAuthenticateConnect(t *testing.T) {
 				authenticator := makeAuthenticatorSource(account, password, timestamp)
 				return cmpp20.PduConnect{
 					SourceAddr:          account,
-					AuthenticatorSource: string(authenticator[:]),
+					AuthenticatorSource: authenticator,
 					Version:             cmpp.Version20,
 					Timestamp:           timestamp,
 				}
@@ -97,22 +99,22 @@ func TestIsFreshConnectTimestampAcrossYearBoundary(t *testing.T) {
 }
 
 func TestNewConnectResponse(t *testing.T) {
-	requestAuthenticator := []byte{
+	requestAuthenticator := [16]byte{
 		0x01, 0x00, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 		0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
 	}
 	request := &cmpp20.PduConnect{
 		Header:              cmpp.NewHeader(0, cmpp.CommandConnect, 42),
-		AuthenticatorSource: string(requestAuthenticator),
+		AuthenticatorSource: requestAuthenticator,
 	}
 
 	success := newConnectResponse(request, cmpp20.ConnectRespStatusSuccess, "test-secret")
 	wantAuthenticator := cmpp.GenConnectRespAuthISMG(
 		[]byte{byte(cmpp20.ConnectRespStatusSuccess)},
-		string(requestAuthenticator),
+		string(requestAuthenticator[:]),
 		"test-secret",
 	)
-	if !bytes.Equal([]byte(success.AuthenticatorISMG), wantAuthenticator) {
+	if !bytes.Equal(success.AuthenticatorISMG[:], wantAuthenticator) {
 		t.Fatalf("AuthenticatorISMG = %x, want %x", success.AuthenticatorISMG, wantAuthenticator)
 	}
 	if success.GetSequenceID() != request.GetSequenceID() || success.Version != cmpp.Version20 {
@@ -120,7 +122,7 @@ func TestNewConnectResponse(t *testing.T) {
 	}
 
 	rejected := newConnectResponse(request, cmpp20.ConnectRespStatusAuthError, "test-secret")
-	if rejected.AuthenticatorISMG != "" {
+	if rejected.AuthenticatorISMG != [16]byte{} {
 		t.Fatalf("rejected AuthenticatorISMG = %x, want empty", rejected.AuthenticatorISMG)
 	}
 }
